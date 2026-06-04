@@ -1,4 +1,5 @@
-import { IngredientPopularProps } from "@/types/ingredient/IngredientPopular";
+import type { IngredientPopularProps } from '@/types/ingredient';
+import { normalizeVietnamese } from '@/utils/vietnamese';
 import IngredientCard from "./IngredientCard";
 
 const PLACEHOLDER_IMG = "/assets/icons/chef.svg";
@@ -7,6 +8,7 @@ export default function IngredientPopular({
   items,
   isPending,
   onQuickAdd,
+  selected,
 }: IngredientPopularProps) {
   return (
     <section className="w-full flex flex-col items-center mt-12 px-16">
@@ -15,7 +17,7 @@ export default function IngredientPopular({
       </h2>
       {isPending ? (
         <p className="mt-8 text-brand-muted font-jakarta">
-          Đang tải gợi ý từ máy chủ…
+          Đang tải gợi ý món ăn
         </p>
       ) : items.length === 0 ? (
         <p className="mt-8 text-brand-muted font-jakarta text-center max-w-md">
@@ -28,11 +30,14 @@ export default function IngredientPopular({
               <IngredientCard
                 name={item.name}
                 image={
-                  item.img && item.img.startsWith("http")
-                    ? item.img
+                  item.image && item.image.startsWith("http")
+                    ? item.image
                     : PLACEHOLDER_IMG
                 }
                 onAdd={() => onQuickAdd(item.name)}
+                isAdded={selected.some(
+                  (s) => normalizeVietnamese(s) === normalizeVietnamese(item.name)
+                )}
               />
             </li>
           ))}

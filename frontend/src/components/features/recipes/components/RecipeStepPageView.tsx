@@ -47,7 +47,7 @@ export default function RecipeDetailPageView({
           <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-8 left-8 flex flex-col gap-3 ml-20">
             <span className="w-fit rounded-[8px] font-jakarta text-base text-white border border-white/30 px-2 py-1 bg-white/20">
-              LUA CHON CUA BAN
+              LỰA CHỌN CỦA BẠN
             </span>
             <h1 className="text-[40px] font-jakarta font-bold text-white">
               {recipe.title || recipe.name}

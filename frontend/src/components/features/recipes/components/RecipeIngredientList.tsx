@@ -21,7 +21,7 @@ export default function IngredientList({ items }: IngredientListProps) {
             width={22}
             height={19}
           />
-          <span className="text-[22px] font-semibold font-epilogue text-brand-orange">
+          <span className="text-[22px] font-semibold font-epilogue text-[#9B3F00]">
             Nguyên liệu
           </span>
         </div>
@@ -32,10 +32,10 @@ export default function IngredientList({ items }: IngredientListProps) {
               key={`${item.id}-${index}`}
             >
               <div>
-                <span className="text-brand-orange font-jakarta text-base">
+                <span className="text-[#9B3F00] font-jakarta text-base">
                   {item.name}
                 </span>
-                <p className="text-brand-muted font-jakarta italic text-xs">
+                <p className="text-[#72544E] font-jakarta italic text-xs">
                   {item.desc}
                 </p>
               </div>

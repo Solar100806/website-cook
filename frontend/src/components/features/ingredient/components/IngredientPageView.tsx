@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import {
   IngredientPopular,
   IngredientSearch,
-} from "@/components/features/ingredient";
-import { useHomePage } from "@/hooks/ingredient/useIngredientPage";
+} from '@/components/features/ingredient';
+import { useIngredientPage } from '@/hooks/ingredient/useIngredientPage';
 
 export default function HomePageView() {
   const {
@@ -22,7 +22,7 @@ export default function HomePageView() {
     goRecipes,
     popularItems,
     isPopularPending,
-  } = useHomePage();
+  } = useIngredientPage();
 
   return (
     <main className="min-h-screen flex flex-col bg-brand-bg">
@@ -32,9 +32,8 @@ export default function HomePageView() {
             Hôm nay bạn muốn ăn gì?
           </h1>
           <div className="flex justify-center">
-            <p className="max-w-167.5 mt-6 text-2xl text-brand-muted font-medium font-jakarta">
-              Nhập nguyên liệu bạn đang có, chúng tôi sẽ gợi ý món ngon chuẩn vị
-              nhất.
+            <p className="max-w-167.5 mt-6 text-2xl text-[#72544E] font-medium font-jakarta">
+              Nhập nguyên liệu bạn đang có, chúng tôi sẽ gợi ý món ngon chuẩn vị nhất.
             </p>
           </div>
         </header>
@@ -58,6 +57,7 @@ export default function HomePageView() {
           items={popularItems}
           isPending={isPopularPending}
           onQuickAdd={onAdd}
+          selected={selected}
         />
       </div>
     </main>

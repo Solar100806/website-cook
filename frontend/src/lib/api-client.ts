@@ -7,7 +7,7 @@ export type ApiError = {
 export type IngredientSuggestion = {
   id: number;
   name: string;
-  img: string | null;
+  image: string | null;
   create_at?: string;
   update_at?: string;
 };

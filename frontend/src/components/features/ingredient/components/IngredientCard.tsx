@@ -1,10 +1,11 @@
-import { IngredientCardProps } from "@/types/ingredient/Ingredientcard";
+import type { IngredientCardProps } from '@/types/ingredient';
 import Image from "next/image";
 
 export default function IngredientCard({
   name,
   image,
   onAdd,
+  isAdded,
 }: IngredientCardProps) {
   return (
     <article className="flex flex-col items-center bg-white rounded-[32px] p-5 shadow-[0px_10px_30px_rgba(0,0,0,0.03)] hover:shadow-[0px_10px_40px_rgba(0,0,0,0.08)] transition-all duration-300 group">
@@ -22,11 +23,20 @@ export default function IngredientCard({
       </h3>
       <button
         type="button"
-        className="flex items-center justify-center gap-2 w-full py-3 rounded-full  font-bold text-[16px] cursor-pointer active:scale-95 transition-transform bg-[#FFEDE9] text-brand-orange"
+        disabled={isAdded}
+        className={`flex items-center justify-center gap-2 w-full py-3 rounded-full font-bold text-[16px] transition-all
+          ${
+            isAdded
+              ? "bg-[#E7E8E9] text-[#A0A4A8] cursor-not-allowed"
+              : "bg-[#FFEDE9] text-brand-orange cursor-pointer active:scale-95 hover:bg-[#FFDAD2]"
+          }
+        `}
         onClick={onAdd}
       >
-        <span className="text-xl leading-none font-light">+</span>
-        Thêm
+        <span className="text-xl leading-none font-light">
+          {isAdded ? "✓" : "+"}
+        </span>
+        {isAdded ? "Đã thêm" : "Thêm"}
       </button>
     </article>
   );

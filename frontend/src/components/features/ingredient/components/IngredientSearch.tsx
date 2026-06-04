@@ -1,7 +1,6 @@
+import type { IngredientSearchProps } from '@/types/ingredient';
 import Button from "@/components/ui/Button";
 import { normalizeVietnamese } from "@/utils/vietnamese";
-import type { IngredientSuggestion } from "@/lib/api-client";
-import { IngredientSearchProps } from "@/types/ingredient/IngredientSearch";
 
 export default function IngredientSearch({
   selected,

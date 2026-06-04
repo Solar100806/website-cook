@@ -1,6 +1,23 @@
 import Image from "next/image";
 import StepCard from "./RecipeStepCard";
 
+const FALLBACK_STEP_IMAGE = "/assets/icons/chef.svg";
+
+function resolveStepImage(raw: string): string {
+  const val = (raw || "").trim();
+  if (!val) return FALLBACK_STEP_IMAGE;
+
+  if (
+    val.startsWith("http://") ||
+    val.startsWith("https://") ||
+    val.startsWith("/")
+  ) {
+    return val;
+  }
+
+  return FALLBACK_STEP_IMAGE;
+}
+
 export type RecipeStepDisplay = {
   id: number;
   step: string;
@@ -31,13 +48,11 @@ export default function RecipeStep({ steps }: RecipeStepProps) {
               width={22}
               height={16}
             />
-            <span className="text-[22px] font-semibold font-jakarta text-brand-orange">
+            <span className="text-[22px] font-semibold font-jakarta text-[#9B3F00]">
               Các bước thực hiện
             </span>
           </div>
-          <span className="text-base font-jakarta text-brand-muted">
-            {label}
-          </span>
+          <span className="text-base font-jakarta text-[#72544E]">{label}</span>
         </div>
         <hr className="mt-2.5" />
         <div className="w-full flex flex-col gap-6 mt-6">
@@ -45,7 +60,7 @@ export default function RecipeStep({ steps }: RecipeStepProps) {
             <StepCard
               key={item.id}
               step={item.step}
-              image={item.image}
+              image={resolveStepImage(item.image)}
               title={item.title}
               desc={item.desc}
             />

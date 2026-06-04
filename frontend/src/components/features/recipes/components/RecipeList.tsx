@@ -4,9 +4,14 @@ import type { RecipeListItem } from "@/types";
 type RecipeListProps = {
   recipes: RecipeListItem[];
   onRecipeClick: (recipe: RecipeListItem) => void;
+  selectedIngredients: string[];
 };
 
-export default function RecipeList({ recipes, onRecipeClick }: RecipeListProps) {
+export default function RecipeList({
+  recipes,
+  onRecipeClick,
+  selectedIngredients,
+}: RecipeListProps) {
   if (recipes.length === 0) return null;
 
   return (
@@ -16,6 +21,7 @@ export default function RecipeList({ recipes, onRecipeClick }: RecipeListProps) 
           key={recipe.id}
           recipe={recipe}
           onRecipeClick={() => onRecipeClick(recipe)}
+          selectedIngredients={selectedIngredients}
         />
       ))}
     </section>

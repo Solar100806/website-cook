@@ -1,22 +1,51 @@
-import Link from "next/link";
-import Image from "next/image";
-import Button from "@/components/ui/Button";
-import type { RecipeListItem } from "@/types";
-
-const PLACEHOLDER_IMG = "/assets/icons/chef.svg";
+import Link from 'next/link';
+import Image from 'next/image';
+import Button from '@/components/ui/Button';
+import type { RecipeListItem } from '@/types';
+import { normalizeVietnamese } from '@/utils/vietnamese';
+import { PLACEHOLDER_IMG } from '@/constants';
 
 type RecipeCardProps = {
   recipe: RecipeListItem;
   onRecipeClick: () => void;
+  selectedIngredients: string[];
 };
 
-export default function RecipeCard({ recipe, onRecipeClick }: RecipeCardProps) {
-  const { title, image, matchPercent, missingIngredients, description } =
-    recipe;
+/** Merges selected and missing ingredients, deduplicating by normalized name. */
+function buildMergedIngredients(
+  selectedIngredients: string[],
+  missingIngredients: string[] = [],
+): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of [...selectedIngredients, ...missingIngredients]) {
+    const name = raw.trim();
+    if (!name) continue;
+    const key = normalizeVietnamese(name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
+export default function RecipeCard({
+  recipe,
+  onRecipeClick,
+  selectedIngredients,
+}: RecipeCardProps) {
+  const { title, image, matchPercent, missingIngredients, description } = recipe;
   const isMatch = matchPercent === 100;
 
+  const mergedIngredients = buildMergedIngredients(selectedIngredients, missingIngredients);
+
+  const backToIngredientsHref =
+    mergedIngredients.length > 0
+      ? `/?ingredients=${encodeURIComponent(JSON.stringify(mergedIngredients))}`
+      : '/';
+
   const resolvedImage =
-    image && (image.startsWith("http") || image.startsWith("/"))
+    image && (image.startsWith('http') || image.startsWith('/'))
       ? image
       : PLACEHOLDER_IMG;
 
@@ -28,11 +57,11 @@ export default function RecipeCard({ recipe, onRecipeClick }: RecipeCardProps) {
           alt={title}
           fill
           className="rounded-t-[32px] object-cover"
-          unoptimized={resolvedImage.startsWith("http")}
+          unoptimized={resolvedImage.startsWith('http')}
         />
         {isMatch ? (
           <figcaption className="absolute top-4 left-4 w-[130px] py-2 flex items-center justify-center gap-2 bg-[#366700] rounded-full">
-            <Image src="/assets/icons/tick.svg" alt="" width={12} height={12} />
+            <Image src="/assets/icons/tick.svg" alt="tick" width={12} height={12} />
             <span className="text-xs font-bold font-jakarta text-[#D7FFB2]">
               KHỚP {matchPercent}%
             </span>
@@ -48,15 +77,11 @@ export default function RecipeCard({ recipe, onRecipeClick }: RecipeCardProps) {
 
       <div className="flex flex-col flex-1 px-8 py-6 justify-between">
         <div>
-          <h3 className="text-2xl text-brand-brown font-epilogue font-bold mb-2">
-            {title}
-          </h3>
+          <h3 className="text-2xl text-[#412923] font-epilogue font-bold mb-2">{title}</h3>
 
-          {/* ĐÃ SỬA Ở ĐÂY 1: Thêm dòng text mô tả khi khớp 100% y hệt Figma */}
           {isMatch ? (
-            <p className="w-full text-sm text-brand-muted font-jakarta leading-relaxed mt-4">
-              Sẵn sàng để nấu. Bạn đã có đủ tất cả nguyên liệu cần thiết cho món
-              ăn này.
+            <p className="w-full text-sm text-[#72544E] font-jakarta leading-relaxed mt-4">
+              Sẵn sàng để nấu. Bạn đã có đủ tất cả nguyên liệu cần thiết cho món ăn này.
             </p>
           ) : missingIngredients && missingIngredients.length > 0 ? (
             <div className="max-w-[320px] w-full flex flex-col gap-3 rounded-2xl bg-[#FFEDE9] p-5 mt-4">
@@ -68,7 +93,7 @@ export default function RecipeCard({ recipe, onRecipeClick }: RecipeCardProps) {
                   width={12}
                   height={12}
                 />
-                <span className="text-xs font-bold font-jakarta text-brand-orange">
+                <span className="text-xs font-bold font-jakarta text-[#9B3F00]">
                   Cần bổ sung:
                 </span>
               </div>
@@ -76,7 +101,7 @@ export default function RecipeCard({ recipe, onRecipeClick }: RecipeCardProps) {
                 {missingIngredients.map((item, index) => (
                   <li
                     key={index}
-                    className="bg-[#FFD3C9] py-1 px-4 rounded-full font-medium font-jakarta text-xs text-brand-muted"
+                    className="bg-[#FFD3C9] py-1 px-4 rounded-full font-medium font-jakarta text-xs text-[#72544E]"
                   >
                     {item}
                   </li>
@@ -84,13 +109,12 @@ export default function RecipeCard({ recipe, onRecipeClick }: RecipeCardProps) {
               </ul>
             </div>
           ) : (
-            <p className="w-full text-sm text-brand-muted font-jakarta leading-relaxed mt-4">
+            <p className="w-full text-sm text-[#72544E] font-jakarta leading-relaxed mt-4">
               {description}
             </p>
           )}
         </div>
 
-        {/* ĐÃ SỬA Ở ĐÂY 2: Thêm class "mt-auto" để ép khối Button này luôn bám chặt đáy thẻ bài */}
         <div className="w-full pt-6 mt-auto">
           {isMatch ? (
             <div className="w-full flex justify-center">
@@ -104,8 +128,8 @@ export default function RecipeCard({ recipe, onRecipeClick }: RecipeCardProps) {
             </div>
           ) : (
             <Link
-              href="/"
-              className="w-full flex items-center justify-center gap-2 py-4 rounded-full bg-[#FFDAD2] font-bold text-[16px] text-jakarta text-brand-orange cursor-pointer active:scale-95 transition-transform"
+              href={backToIngredientsHref}
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-full bg-[#FFDAD2] font-bold text-[16px] text-jakarta text-[#9B3F00] cursor-pointer active:scale-95 transition-transform"
             >
               Thêm nguyên liệu
             </Link>

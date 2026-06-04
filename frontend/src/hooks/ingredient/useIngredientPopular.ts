@@ -1,14 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
+import { apiFetchJson } from "@/lib/api-client";
+import type { IngredientSuggestion } from "@/lib/api-client";
 
 export function useIngredientPopular() {
     const { data: popularItems = [], isPending: isPopularPending } = useQuery({
         queryKey: ["ingredientPopular"],
-        queryFn: async () => {
-            const res = await fetch("http://localhost:4000/api/ingredients/popular");
-            if (!res.ok) throw new Error("Lỗi khi tải dữ liệu phổ biến");
-            const json = await res.json();
-            return json.data;
-        },
+        queryFn: () => apiFetchJson<IngredientSuggestion[]>("/ingredients/popular"),
         staleTime: 5 * 60_000, // Cache trong 5 phút
     });
 

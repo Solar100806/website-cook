@@ -1,77 +1,122 @@
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { normalizeVietnamese } from "@/utils/vietnamese";
-import { useIngredientSearch } from "./useIngredientSearch";
-import { useIngredientPopular } from "./useIngredientPopular";
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { normalizeVietnamese } from '@/utils/vietnamese';
+import { parseIngredientsFromURL } from '@/utils/parseIngredients';
+import { SESSION_STORAGE_KEYS } from '@/constants';
+import { useIngredientSearch } from './useIngredientSearch';
+import { useIngredientPopular } from './useIngredientPopular';
 
-// Helper function
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Deduplicates ingredient names while preserving insertion order. */
 function dedupePreserveOrder(names: string[]): string[] {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const raw of names) {
-        const n = raw.trim();
-        if (!n) continue;
-        const k = normalizeVietnamese(n);
-        if (seen.has(k)) continue;
-        seen.add(k);
-        out.push(n);
-    }
-    return out;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of names) {
+    const n = raw.trim();
+    if (!n) continue;
+    const key = normalizeVietnamese(n);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(n);
+  }
+  return out;
 }
 
-export function useHomePage() {
-    const router = useRouter();
+// ─── Hook ─────────────────────────────────────────────────────────────────────
 
-    // 1. Quản lý state cốt lõi của cả trang
-    const [selected, setSelected] = useState<string[]>([]);
+/**
+ * Orchestrates all state and logic for the ingredient selection page.
+ * Persists selections to sessionStorage and syncs with URL search params.
+ */
+export function useIngredientPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-    // 2. Gọi các hook con
-    const searchLogic = useIngredientSearch(selected); // Truyền selected vào đây
-    const popularLogic = useIngredientPopular();
+  // ── Selected ingredients ─────────────────────────────────────────────────
+  const [selected, setSelected] = useState<string[]>([]);
 
-    // 3. Các hàm xử lý tương tác
-    const onAdd = useCallback((name: string) => {
-        setSelected((prev) => dedupePreserveOrder([...prev, name]));
-    }, []);
+  const selectedFromUrl = useMemo(
+    () => dedupePreserveOrder(parseIngredientsFromURL(searchParams.get('ingredients'))),
+    [searchParams],
+  );
 
-    const onRemove = useCallback((name: string) => {
-        const k = normalizeVietnamese(name);
-        setSelected((prev) => prev.filter((x) => normalizeVietnamese(x) !== k));
-    }, []);
+  // Restore from URL or sessionStorage on mount
+  useEffect(() => {
+    if (selectedFromUrl.length > 0) {
+      setSelected(selectedFromUrl);
+      return;
+    }
+    try {
+      const cached = sessionStorage.getItem(SESSION_STORAGE_KEYS.selectedIngredients);
+      if (!cached) return;
+      const parsed = JSON.parse(cached) as unknown;
+      if (!Array.isArray(parsed)) return;
+      const restored = dedupePreserveOrder(
+        parsed.filter((x): x is string => typeof x === 'string' && x.trim().length > 0),
+      );
+      if (restored.length > 0) setSelected(restored);
+    } catch (err) {
+      console.error('[useIngredientPage] Failed to read sessionStorage:', err);
+    }
+  }, [selectedFromUrl]);
 
-    const onSearchSubmit = useCallback(() => {
-        const t = searchLogic.input.trim();
-        if (!t) return;
-        onAdd(t);
-        searchLogic.setInput("");
-        searchLogic.setOpen(false);
-    }, [searchLogic.input, onAdd, searchLogic]);
+  // Persist selected to sessionStorage whenever it changes
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        SESSION_STORAGE_KEYS.selectedIngredients,
+        JSON.stringify(selected),
+      );
+    } catch (err) {
+      console.error('[useIngredientPage] Failed to write sessionStorage:', err);
+    }
+  }, [selected]);
 
-    const goRecipes = useCallback(() => {
-        if (selected.length === 0) return;
-        const payload = encodeURIComponent(JSON.stringify(selected));
-        router.push(`/recipes?ingredients=${payload}`);
-    }, [selected, router]);
+  // ── Sub-hooks ────────────────────────────────────────────────────────────
+  const searchLogic = useIngredientSearch(selected);
+  const popularLogic = useIngredientPopular();
 
-    // 4. Trả về payload khớp hoàn toàn với HomePageViewProps
-    return {
-        selected,
-        onAdd,
-        onRemove,
-        goRecipes,
-        onSearchSubmit,
+  // ── Handlers ─────────────────────────────────────────────────────────────
+  const onAdd = useCallback((name: string) => {
+    setSelected((prev) => dedupePreserveOrder([...prev, name]));
+  }, []);
 
-        // Bóc tách từ searchLogic
-        input: searchLogic.input,
-        onInputChange: searchLogic.setInput,
-        open: searchLogic.open,
-        onOpenChange: searchLogic.setOpen,
-        debouncedInput: searchLogic.debouncedInput,
-        suggestions: searchLogic.suggestions,
-        isSuggestionsFetching: searchLogic.isSuggestionsFetching,
+  const onRemove = useCallback((name: string) => {
+    const key = normalizeVietnamese(name);
+    setSelected((prev) => prev.filter((x) => normalizeVietnamese(x) !== key));
+  }, []);
 
-        // Bóc tách từ popularLogic
-        popularItems: popularLogic.popularItems,
-        isPopularPending: popularLogic.isPopularPending,
-    };
+  const onSearchSubmit = useCallback(() => {
+    const trimmed = searchLogic.input.trim();
+    if (!trimmed) return;
+    onAdd(trimmed);
+    searchLogic.setInput('');
+    searchLogic.setOpen(false);
+  }, [searchLogic, onAdd]);
+
+  const goRecipes = useCallback(() => {
+    if (selected.length === 0) return;
+    const payload = encodeURIComponent(JSON.stringify(selected));
+    router.push(`/recipes?ingredients=${payload}`);
+  }, [selected, router]);
+
+  return {
+    selected,
+    onAdd,
+    onRemove,
+    goRecipes,
+    onSearchSubmit,
+    // Search
+    input: searchLogic.input,
+    onInputChange: searchLogic.setInput,
+    open: searchLogic.open,
+    onOpenChange: searchLogic.setOpen,
+    debouncedInput: searchLogic.debouncedInput,
+    suggestions: searchLogic.suggestions,
+    isSuggestionsFetching: searchLogic.isSuggestionsFetching,
+    // Popular
+    popularItems: popularLogic.popularItems,
+    isPopularPending: popularLogic.isPopularPending,
+  };
 }
