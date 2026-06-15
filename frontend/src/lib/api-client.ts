@@ -65,14 +65,20 @@ export async function apiFetchJson<T>(
   path: string,
   init?: RequestInit,
 ): Promise<T> {
-  const url = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
-  const base = url || "http://localhost:4000";
+  // On Vercel/production: use /api relative path (same-origin)
+  // Optionally override via NEXT_PUBLIC_API_URL for custom deployments
+  const envUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '');
+  // If envUrl looks like a full URL (starts with http), use it; otherwise use /api
+  const base =
+    envUrl && (envUrl.startsWith('http://') || envUrl.startsWith('https://'))
+      ? envUrl
+      : '/api';
 
   const res = await fetch(`${base}${path}`, {
     ...init,
     headers: {
-      Accept: "application/json",
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      Accept: 'application/json',
+      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
       ...init?.headers,
     },
   });
